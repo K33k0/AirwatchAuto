@@ -1,2 +1,3 @@
-./.pdm-python
-./devices.log
+
+/devices.log
+/.pdm-python
