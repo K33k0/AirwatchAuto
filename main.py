@@ -8,20 +8,21 @@ import selenium.webdriver.support.expected_conditions as EC
 from loguru import logger
 from datetime import datetime
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
+import toml
+config = toml.load("./config.toml")
+INSTANCE = config["AirWatch"]["instance"]
+USERNAME = config["AirWatch"]["username"]
+PASSWORD = config["AirWatch"]["password"]
+
 logger.add("device.log", format="{time} | {level} | {message}")
 
-USERNAME = ""
-PASSWORD = ""
-WEBDRIVER_PATH = "./msedgedriver.exe"
-# https://?????.awmdm.com/AirWatch
-DOMAIN = "" 
 
 def initialize_driver():
     options = Options()
     options.add_argument(f'--log-level=3')
     service = Service(EdgeChromiumDriverManager().install())
     driver = webdriver.Edge(service=service, options=options)
-    driver.get(f"{DOMAIN}/Login")
+    driver.get(f"https://{INSTANCE}.awmdm.com/AirWatch/Login")
     return driver
 
 def login(driver=None):
@@ -45,7 +46,7 @@ def login(driver=None):
     wait.until(EC.element_to_be_clickable((By.ID, "location_group")))
 
 def query(serial_number, driver=None,):
-    driver.get(f'{DOMAIN}/#/AirWatch/Search?query={serial_number}')
+    driver.get(f'https://{INSTANCE}.awmdm.com/#/AirWatch/Search?query={serial_number}')
     wait = WebDriverWait(driver, 15, poll_frequency=0.5)
     wait.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, "#global_search_header > em:nth-child(2)"), serial_number))
     try:

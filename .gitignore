@@ -1,3 +1,4 @@
 
 /devices.log
 /.pdm-python
+/config.toml
