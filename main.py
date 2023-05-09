@@ -1,4 +1,3 @@
-import time
 from selenium import webdriver
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.edge.options import Options
@@ -6,16 +5,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 import selenium.webdriver.support.expected_conditions as EC
 from loguru import logger
-from datetime import datetime
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 import toml
+import csv
+
 config = toml.load("./config.toml")
 INSTANCE = config["AirWatch"]["instance"]
 USERNAME = config["AirWatch"]["username"]
 PASSWORD = config["AirWatch"]["password"]
 
 logger.add("device.log", format="{time} | {level} | {message}")
-
 
 def initialize_driver():
     options = Options()
@@ -58,18 +57,25 @@ def query(serial_number, driver=None,):
         # Device needs moving
         return (serial_number, True)
     
-
-if __name__ == "__main__":
+def run():
     driver = initialize_driver()
-    login(driver=driver)
-    ListOfSerialNumber = """  	
-
-    """.splitlines()
-    for device in ListOfSerialNumber:
-        if len(device.strip()) == 14:
-            device, state = query(device.strip(), driver=driver)
+    login(driver)
+    # Open csv file in readonly mode
+    with open('devices_to_process.csv', mode='r') as file:
+        # read csv file
+        csv_file = csv.reader(file)
+        # each line is another device. do things with each device
+        for device in csv_file:
+            # breakout of the encapsuting list, attempt to remove extra whitespace
+            device = device[0].strip()
+            # Query airwatch, returning the device id & if it is installed
+            device, state = query(device, driver=driver)
             if state:
                 logger.info(f"{device}, installed")
             else:
                 logger.info(f"{device}, Not installed")
-input()
+
+if __name__ == "__main__":
+    run()
+    # input pauses at the end, giving the user chance to remove device that need doing
+    input()

@@ -2,3 +2,5 @@
 /devices.log
 /.pdm-python
 /config.toml
+/device.log
+/devices_to_process.csv
