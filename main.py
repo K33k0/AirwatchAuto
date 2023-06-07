@@ -82,8 +82,7 @@ def update_db(serial_number, needs_removal):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
     cursor.execute("""
-    UPDATE MC18
-   22200. SET Airwatch_removal_required = (?),
+    UPDATE MC18 SET Airwatch_removal_required = (?),
         Date_Checked = date(),
         Airwatch_checked = 1
         WHERE Serial_Number = (?) AND Date_Checked is null
