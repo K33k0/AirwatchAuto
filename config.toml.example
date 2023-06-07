@@ -2,3 +2,4 @@
 instance = 
 username = 
 password = 
+database_location = 'C:/Users/Me/log.db'

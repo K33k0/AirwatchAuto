@@ -8,14 +8,17 @@ from loguru import logger
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 import toml
 import csv
+import sqlite3
 
 config = toml.load("./config.toml")
 INSTANCE = config["AirWatch"]["instance"]
 USERNAME = config["AirWatch"]["username"]
 PASSWORD = config["AirWatch"]["password"]
+database = config["AirWatch"]["database_location"]
 
 logger.add("device.log", format="{time} | {level} | {message}")
 
+    
 def initialize_driver():
     options = Options()
     options.add_argument(f'--log-level=3')
@@ -60,22 +63,66 @@ def query(serial_number, driver=None,):
 def run():
     driver = initialize_driver()
     login(driver)
-    # Open csv file in readonly mode
-    with open('devices_to_process.csv', mode='r') as file:
-        # read csv file
-        csv_file = csv.reader(file)
-        # each line is another device. do things with each device
-        for device in csv_file:
-            # breakout of the encapsuting list, attempt to remove extra whitespace
-            device = device[0].strip()
-            # Query airwatch, returning the device id & if it is installed
-            device, state = query(device, driver=driver)
-            if state:
-                logger.info(f"{device}, installed")
-            else:
-                logger.info(f"{device}, Not installed")
+    # each line is another device. do things with each device
+    for device in read_db():
+        # breakout of the encapsuting list, attempt to remove extra whitespace
+        device = device.strip()
+        # Query airwatch, returning the device id & if it is installed
+        device, state = query(device, driver=driver)
+        if state:
+            update_db(device, True)
+            logger.info(f"{device}, installed")
+        else:
+            update_db(device, False)
+            logger.info(f"{device}, Not installed")
+    # Keep alive
+    return driver
+
+def update_db(serial_number, needs_removal):
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute("""
+    UPDATE MC18
+   22200. SET Airwatch_removal_required = (?),
+        Date_Checked = date(),
+        Airwatch_checked = 1
+        WHERE Serial_Number = (?) AND Date_Checked is null
+    """, (int(needs_removal), serial_number))
+    conn.commit()
+    pass
+
+def display_removals_and_update():
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute("SELECT Serial_Number from MC18 WHERE Airwatch_removal_required = 1 and Date_Checked = date()")
+    rows = cursor.fetchall()
+    for row in rows:
+        print(row[0])
+        update_db(row[0], False)
+
+
+
+def read_db():
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute("SELECT Serial_Number from MC18 WHERE Airwatch_checked = 0")
+    rows = cursor.fetchall()
+    serials = []
+    for row in rows:
+        serial = row[0].upper()
+        if len(serial) == 0:
+            continue
+        if serial[0] == "S":
+            serial = row[1:]
+        if type(serial) == str and len(serial) == 14:
+            print(f'adding {serial}')
+            serials.append(serial)
+        else:
+            print(f'ignoring {serial}')
+    return serials
 
 if __name__ == "__main__":
-    run()
-    # input pauses at the end, giving the user chance to remove device that need doing
+    # read_db()
+    driver = run()
+    display_removals_and_update()
     input()
