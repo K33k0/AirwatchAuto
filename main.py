@@ -108,21 +108,20 @@ def read_db():
     cursor.execute("SELECT Serial_Number from MC18 WHERE Airwatch_checked = 0")
     rows = cursor.fetchall()
     logger.debug(f'Found {len(rows)}')
-    for row in rows:
-        serial = row[0].upper()
+    return [serial for serial in clean_raw_serial(rows)]
+    
+
+def clean_raw_serial(serials):
+    for serial in serials:
+        serial = serial[0].upper()
         if len(serial) == 0:
-            continue
+            return
         if serial[0] == "S":
-            serial = row[1:]
+            serial = serial[1:]
         if type(serial) == str and len(serial) == 14:
-            print(f'adding {serial}')
-            serials.append(serial)
-        else:
-            print(f'ignoring {serial}')
-    return serials
+            yield serial
 
 if __name__ == "__main__":
-    # read_db()
     driver = run()
     display_removals_and_update()
     input()
