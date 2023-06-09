@@ -96,7 +96,8 @@ def display_removals_and_update():
     cursor.execute("SELECT Serial_Number from MC18 WHERE Airwatch_removal_required = 1 and Date_Checked = date()")
     rows = cursor.fetchall()
     for row in rows:
-        print(row[0])
+        logger.debug(row[0])
+        # print(row[0])
         update_db(row[0], False)
 
 
@@ -106,7 +107,7 @@ def read_db():
     cursor = conn.cursor()
     cursor.execute("SELECT Serial_Number from MC18 WHERE Airwatch_checked = 0")
     rows = cursor.fetchall()
-    serials = []
+    logger.debug(f'Found {len(rows)}')
     for row in rows:
         serial = row[0].upper()
         if len(serial) == 0:
