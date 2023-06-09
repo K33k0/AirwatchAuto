@@ -85,8 +85,8 @@ def update_db(serial_number, needs_removal):
     UPDATE MC18 SET Airwatch_removal_required = (?),
         Date_Checked = date(),
         Airwatch_checked = 1
-        WHERE Serial_Number = (?) AND Date_Checked is null
-    """, (int(needs_removal), serial_number))
+        WHERE Serial_Number like (?) AND Date_Checked is null
+    """, (int(needs_removal), "%"+serial_number))
     conn.commit()
     pass
 
